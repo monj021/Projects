@@ -1,0 +1,107 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby, 
+C#, VB, Perl, Swift, Prolog, Javascript, Pascal, HTML, CSS, JS
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+
+//Parenthesis
+/******************************************************************************
+
+                              Online C++ Compiler.
+               Code, Compile, Run and Debug C++ program online.
+Write your code in this editor and press "Run" button to compile and execute it.
+
+*******************************************************************************/
+
+#include <iostream>
+#include <string.h>
+#include <stack>
+
+using namespace std;
+
+
+
+bool BalanceParenthesis(string str)
+{
+    std::stack<char> st;
+    int l= str.length();
+    bool flag= false;
+    string ns;
+    for(int i=0;i<l;i++)
+    {
+        if(str[i]== '(' || str[i]== '[' || str[i] == '{')
+        {
+            st.push(str[i]);
+        }
+        else if(str[i] == ')' || str[i] == ']' || str[i] == '}')
+        {
+            if(st.empty())
+            {
+                return false;   
+            }
+            else
+            {
+                char c=st.top();
+                st.pop();
+                switch(c)
+                {
+                    case '(':
+                    if(str[i] != ')')
+                    {
+                        return false;
+                    }
+                    break;
+                    
+                    
+                    case '[':
+                    if(str[i] != ']')
+                    {
+                        return false;
+                    }
+                    break;
+                    
+                    
+                    case '{':
+                    if(str[i] != '}')
+                    {
+                        return false;
+                    }
+                    break;
+                }
+                }
+                
+            }
+        }
+    
+    if(st.empty())
+    {
+        return true;
+    }
+    else
+    {
+        cout<<"Stack not empty, value of top="<<st.top()<<endl;
+        return false;    
+    }
+    
+}
+
+int main()
+{
+    string str = "{(}[][])";
+    bool ifpar=BalanceParenthesis(str);
+    if(ifpar)
+    {
+        cout<<"Balanced Parenthesis \n";
+    }
+    else
+    {
+        cout<<"Unbalanced parenthesis\n";
+    }
+    
+}
+
+
+
