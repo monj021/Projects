@@ -1,0 +1,83 @@
+/******************************************************************************
+
+Convert an Infix Expression to a Postfix expression
+
+*******************************************************************************/
+
+#include <iostream>
+#include <string.h>
+#include <stack>
+
+using namespace std;
+
+int prec(char c)
+{
+    if(c='^')
+    {
+        return 3;
+    }
+    else if(c=='*' || c =='/')
+    {
+        return 2;
+    }
+    else if( c=='+' || c =='-')
+    {
+        return 1;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+void infixtopostfix(string str)
+{
+    std::stack<char> st;
+    st.push('N');
+    int l= str.length();
+    string ns;
+    for(int i =0;i<l;i++)
+    {
+        if(str[i] <='z' && str[i] >='a' || str[i] <='Z' && str[i] >='A')
+        {
+            ns+=str[i];
+        }
+        else if(str[i]=='(')
+        {
+            st.push('(');
+        }
+        else if(str[i] == ')')
+        {
+            while(st.top()!= 'N' && st.top()!='(')
+            {
+                char c= st.top();
+                st.pop();
+                ns+=c;
+            }
+            if(st.top()=='(')
+            {
+                char c = st.top();
+                st.pop();
+            }
+        }
+        else
+        while(st.top()!= 'N' && prec(str[i])<=prec(st.top()))
+        {
+            char c = st.top();
+            st.pop();
+            ns+=c;
+        }
+        st.push(str[i]);
+    }
+    
+    cout<<endl<<ns;
+}
+
+int main()
+{
+    cout<<"Hello World";
+    string exp = "a+b*(c^d-e)^(f+g*h)-i"; 
+    infixtopostfix(exp); 
+    return 0;
+}
+
