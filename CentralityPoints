@@ -1,0 +1,393 @@
+#include <limits.h> 
+#include <stdio.h> 
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define CONSTRUCT_GRAPH 
+#ifndef CONSTRUCT_GRAPH
+    #define V 8
+#else
+    int V;//global variable for to store number of vertices of graph
+#endif
+#define MAX_SIZE 100
+
+
+int predecessor_array[MAX_SIZE][MAX_SIZE]={0};
+
+int sigma[MAX_SIZE]={0};
+
+int sigma_final[MAX_SIZE][MAX_SIZE]={0};
+float closeness[MAX_SIZE]={0};
+
+int lambda_from_all_source[MAX_SIZE][MAX_SIZE]={0};
+
+// A utility function to find the vertex with minimum distance value, from 
+// the set of vertices not yet included in shortest path tree 
+int minDistance(int dist[], bool sptSet[]) 
+{ 
+    // Initialize min value 
+    int min = INT_MAX, min_index; 
+  
+    for (int v = 0; v < V; v++) 
+        if (sptSet[v] == false && dist[v] <= min) 
+            min = dist[v], min_index = v; 
+  
+    return min_index; 
+} 
+  
+
+int min(int dist[])
+{
+   int minimum, location = 0;
+   minimum = -1;
+   for(int i=0;i<V;i++)
+   {
+       if(dist[i]>=0)
+       {
+           minimum=dist[i];//Find the first positive integer as minimum as entries are marked as -1 to exclude them from search array to indicate they are already processed
+           location = i;
+           //printf("First minimum to compare is %d\n",minimum);
+           break;
+       }
+   }
+    if(minimum >=0)
+    {
+    for (int c = 1; c < V; c++)
+    {
+        
+        if ((dist[c] >=0) && (dist[c] < minimum))
+        {
+           minimum = dist[c];
+           location = c;
+        }
+        
+    }
+    }
+    //printf("Node with minimum lambda is  %d\n",location);
+    return location;
+}
+
+float apply_bellman_criteria(int src, int dest, int u)
+{
+    float sigma_u=0.0;
+    bool visited[MAX_SIZE][MAX_SIZE];
+    for(int i=0;i<V;i++)
+    {
+        for(int j=0;j<V;j++)
+        {
+            visited[i][j]=false;
+        }
+        
+    }
+    
+    for(src=0;src<V;src++)
+    {
+        for(dest=0;dest<V;dest++)
+        {
+            if(src!=u && dest!=u && !visited[src][dest] && sigma_final[src][dest]>0 && src!=dest )
+            {
+                visited[src][dest]=true;
+                visited[dest][src]=true;
+                if(lambda_from_all_source[src][dest] < (lambda_from_all_source[src][u] + lambda_from_all_source[dest][u]))
+                {
+                    //sigma_u =0;
+                    //printf("d(%d,%d) is %d d(%d,%d) is %d d(%d,%d) is %d\n",src,dest,lambda_from_all_source[src][dest],src,u,lambda_from_all_source[src][u],dest,u,lambda_from_all_source[dest][u]);
+                }
+                else
+                {                    
+                    //printf("else d(%d,%d) is %d d(%d,%d) is %d d(%d,%d) is %d\n",src,dest,lambda_from_all_source[src][dest],src,u,lambda_from_all_source[src][u],dest,u,lambda_from_all_source[dest][u]);
+                    //printf("numerator part = %d and denominator part = %d\n and division = %f\n",sigma_final[src][u]*sigma_final[dest][u],sigma_final[src][dest], (float)sigma_final[src][u]*sigma_final[dest][u]/(float)sigma_final[src][dest]);
+                    sigma_u = sigma_u + (float)sigma_final[src][u]*sigma_final[dest][u]/(float)sigma_final[src][dest];
+                    //printf("the value of sigmau = %f\n", sigma_u);
+                }
+            }
+        }
+    }
+    printf("betweenness for vertex %d is %f\n",u,sigma_u);    
+    return sigma_u;
+}
+
+int calculate_sigma( int graph[V][V], int dist[], int tmpgdist[], int src)
+{
+
+   //printf("BELLMAN ALGO STARTS\n");
+   int u,w;
+   int gdistsize=V;
+   int gdist[MAX_SIZE]={0};
+   
+   for(int i=0; i<V;i++)
+   {
+       gdist[i]=tmpgdist[i];
+   }
+   while(gdistsize >1 )
+   {
+      u=min(gdist);
+
+      //printf("Minimum distance vertex is %d\n",u);
+#if 1
+      for(int i=0; i<V;i++)
+      {
+              if( graph[u][i] > 0)
+              {
+               w=i;
+              if(dist[u] + graph[u][w] <= dist[w])
+                       dist[w] = dist[u] + graph[u][w];
+              for(int i=0; i < V;i++)
+              {
+                      if ( (u == predecessor_array[w][i]) && (w!=src))
+                      {
+       //                      printf("%d is predecessor of %d. Update sigma[%d]\n",u,w,w);
+                             sigma[w]=sigma[w] + sigma[u];
+       //                      printf("New sigma[%d] is %d\n",w,sigma[w]);
+                             break;
+                      }
+              } 
+              }
+      }
+#endif      
+      gdist[u]=-1;
+
+      gdistsize--;
+      
+   }
+   for(int i=0;i<V;i++)
+   {
+           printf("sigma of node %d is %d\n",i,sigma[i]);
+           sigma_final[src][i]=sigma[i];
+   }
+   //printf("BELLMAN ALGO ENDS\n");
+}
+
+
+
+void find_predecessor(int node, int graph[V][V], int dist[])
+{
+
+        // find all vertex connected to node
+
+        for(int i=0,count=0; i<V;i++)
+
+        {
+                 if ( graph[node][i] > 0 )
+                 {
+//                        printf("Seems %d is adj to  node %d\n",i,node);
+                        if(dist[node] == dist[i]+ graph[node][i] )
+                        {
+                                printf("predecessor of node %d is %d\n",node,i);
+                                predecessor_array[node][count]=i;
+                                count++;
+                        }
+                 }
+        }
+}
+
+
+// Function that implements Dijkstra's single source shortest path algorithm 
+// for a graph represented using adjacency matrix representation 
+void dijkstra(int graph[V][V], int src) 
+{ 
+    int dist[V]; // The output array.  dist[i] will hold the shortest 
+    // distance from src to i 
+    int sumdist =0;
+  
+    bool sptSet[V]; // sptSet[i] will be true if vertex i is included in shortest 
+    // path tree or shortest distance from src to i is finalized 
+  
+    // Initialize all distances as INFINITE and stpSet[] as false 
+    for (int i = 0; i < V; i++) 
+        dist[i] = INT_MAX, sptSet[i] = false; 
+  
+    // Distance of source vertex from itself is always 0 
+    dist[src] = 0; 
+   // sdist[src][src]=0;
+    // Find shortest path for all vertices 
+    for (int count = 0; count < V - 1; count++) { 
+        // Pick the minimum distance vertex from the set of vertices not 
+        // yet processed. u is always equal to src in the first iteration. 
+        int u = minDistance(dist, sptSet); 
+  
+        // Mark the picked vertex as processed 
+        sptSet[u] = true; 
+  
+        // Update dist value of the adjacent vertices of the picked vertex. 
+        for (int v = 0; v < V; v++) 
+  
+            // Update dist[v] only if is not in sptSet, there is an edge from 
+            // u to v, and total weight of path from src to  v through u is 
+            // smaller than current value of dist[v] 
+            if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX 
+                && dist[u] + graph[u][v] < dist[v]) 
+                {
+                    dist[v] = dist[u] + graph[u][v]; 
+                    lambda_from_all_source[src][v]=dist[v];
+                }
+    } 
+  
+    // print the constructed distance array 
+    for(int i=0;i<V;i++)
+    {
+    sumdist=sumdist+dist[i];
+    printf("Shortest Distance(Lambda) of node %d from source %d is %d\n", i, src, dist[i]);
+    }
+    
+    for(int i=0;i<V;i++)//Initialize predecessor array
+    {
+        for(int j=0;j<V;j++)
+            predecessor_array[i][j]=-1;
+    }
+
+    for(int i=0;i<V;i++)
+    {
+        find_predecessor(i, graph, dist);
+    }
+
+
+    closeness[src]=(float)1/sumdist;
+ //   printSolution(dist, V); 
+ 
+    for(int i=0;i<V;i++)//Initialize sigma array
+    {
+        sigma[i]=0;
+    }
+    sigma[src]=1;//Initialize sigma of the source to 1
+    calculate_sigma(graph, dist, dist, src);
+}
+
+int find_closeness(int graph[V][V])
+{
+    int i=0,closeness_point=0,closeness_value=0;
+    float sum=0;
+    for (i=0;i<V;i++)
+    {
+        closeness_value=0;
+        for(int j=0;j<V;j++)
+        {
+            closeness_value=closeness_value+lambda_from_all_source[i][j];
+        }
+        closeness[i]=(float)1/closeness_value;
+    }
+    for(i=0;i<V;i++)
+    {
+      //  printf("closness for node %d = %f\n", i, closeness[i]);
+        if(closeness[i]>sum)
+        {
+            sum=closeness[i];
+            closeness_point = i;
+        }
+    }
+    return closeness_point;
+}
+
+
+int noshortestpath(int i, int j)
+{
+    int numberofshortpath =0;
+    return numberofshortpath;
+}
+
+void print_graph(int adj_mat[V][V], int n)
+{
+
+	int i, j;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++)
+            printf("%4d", adj_mat[i][j]);
+        printf("\n");
+
+    }
+}
+
+
+int read_graph ( int adj_mat[V][V], int n )
+{
+    int i, j;
+    char reply;
+    char weight ;
+    for ( i = 0 ; i < n ; i++ )
+    {
+        for ( j = 0 ; j < n ; j++ )
+        {
+            if ( i == j )
+            {
+                adj_mat[i][j] = 0;
+                continue;
+            }
+            printf("Vertices %d & %d are Adjacent ? (Y/N) : \n",i,j);
+            //fflush(stdin);
+            scanf(" %c", &reply);
+            if ( reply == 'y' || reply == 'Y' )
+	    {
+		printf("Enter weight\n");
+		//fflush(stdin);
+		scanf(" %c", &weight);   
+                adj_mat[i][j] = atoi(&weight);
+	    }
+            else
+                adj_mat[i][j] = 0;
+        }
+    }
+    return 1;
+}
+
+
+
+
+int main() 
+{ 
+	int src, dest, node_for_betweenness;
+	float max_betweenness=0.0, betweenness=0.0;
+	src=0; dest=7; node_for_betweenness=1;
+
+#ifdef CONSTRUCT_GRAPH
+	int graph[100][100];
+    int deg, i, j;
+    printf("\n How Many Vertices ? : ");
+    //fflush(stdin);
+    scanf(" %d", &V);
+    read_graph(graph, V);
+    //printf("\n Vertex \t Degree ");
+    print_graph(graph, V);
+#else
+    int graph[V][V] = { { 0, 2, 1,  2, 0,  0,  0, 0  }, 
+                        { 2, 0, 1,  0, 0,  0,  3, 0  }, 
+                        { 1, 1, 0,  1, 0,  4,  0, 0  }, 
+                        { 2, 0, 1,  0, 1,  0,  0, 0  }, 
+                        { 0, 0, 0,  1, 0,  2,  0, 3  }, 
+                        { 0, 0, 4,  0, 2,  0,  2, 3  }, 
+                        { 0, 3, 0,  0, 0,  2,  0, 1  }, 
+                        { 0, 0, 0,  0, 3,  3,  1, 0  } }; 
+#endif
+    printf("####Calculation of shortest distance(lambda) , Predecessor , Sigma of all nodes keeping a source node constant###\n");
+    for( int src_node=0;src_node<V;src_node++)
+    {
+ printf("\n\nSOURCE NODE : %d\n\n", src_node);
+        dijkstra(graph, src_node );
+    }
+    printf("\n\nSigma Table for all nodes:\n");
+    for( int src_node=0;src_node<V;src_node++)
+    {
+        printf("Node %d: ",src_node);
+        for(int i=0;i<V;i++)
+        {
+            printf("%d ",sigma_final[src_node][i]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+    
+    for(int i=0;i<V;i++)
+    {
+        betweenness = apply_bellman_criteria(src,dest,i);
+        if(max_betweenness < betweenness)
+        {
+            max_betweenness=betweenness;
+            node_for_betweenness=i;
+        }
+    }
+    printf("\n###Calculate betweenness of the graph####\n");
+    printf("The betweenness node is = %d and its betweenness value is %f\n",node_for_betweenness, max_betweenness);
+    printf("\n###Calculate closeness in the graph###\n");
+    printf("The closeness point is %d and the closness value is %f\n", find_closeness(graph), closeness[find_closeness(graph)]);
+    return 0; 
+} 
+
