@@ -1,3 +1,18 @@
+/*
+
+This project is for calculating Centrality points called Closeness and Betweenness from a graph.
+In the context of a network, these two metrics are used to evaluate the importance of nodes in the network. 
+
+1)Closeness of a node is a measure of how close that node is from other nodes in a network/graph. For this implementation, the formula for closeness 
+for each node is 1/(Summation of shortest paths from that node to other nodes)
+
+2)Betweenness is a measure of how much traffic a particular node gets in a network. In this implementation, the formula for betweenness for 
+a particular node V is calculated as Summation of the (Ratio of number of shortest paths going that node and Total Number of shortest paths)
+
+We use Dijkstra's algorithm for each pair of nodes in the graph and use it to calculate Closeness and Betweenness.
+
+*/
+
 #include <limits.h> 
 #include <stdio.h> 
 #include <stdlib.h>
